@@ -1,43 +1,54 @@
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
+#include <wchar.h>
+#include <stdlib.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY);
 
 int main(){
-    // ÆÄÀÏ ÀÌ¸§µé ¹è¿­·Î ÀúÀå
+    setlocale(LC_ALL, "ko_KR.UTF-8");
+    // íŒŒì¼ ì´ë¦„ë“¤ ë°°ì—´ë¡œ ì €ì¥
     const char *files[] = {
-        "typing_sentences/¾Ö±¹°¡.txt",
-        "typing_sentences/º°_Çì´Â_¹ã.txt",
-        "typing_sentences/´ÔÀÇ_Ä§¹¬.txt",
-        "typing_sentences/Çâ¼ö.txt"
+        "typing_sentences/ì• êµ­ê°€.txt",
+        "typing_sentences/ë³„_í—¤ëŠ”_ë°¤.txt",
+        "typing_sentences/ë‹˜ì˜_ì¹¨ë¬µ.txt",
+        "typing_sentences/í–¥ìˆ˜.txt"
     };
     int num_files = sizeof(files) / sizeof(files[0]);
 
-    // Å¸ÀÚ ¿¬½À ÆÄÀÏ ¸ñ·Ï Ãâ·Â
-    printf("Å¸ÀÚ ¿¬½À ÆÄÀÏ ¸ñ·Ï:\n");
+    // íƒ€ì ì—°ìŠµ íŒŒì¼ ëª©ë¡ ì¶œë ¥
+    printf("íƒ€ì ì—°ìŠµ íŒŒì¼ ëª©ë¡:\n");
     int i;
     for(i = 0; i < num_files; i++){
 
         printf("%d. %s\n", i + 1, files[i]);
     }
 
-    // ÆÄÀÏ ¼±ÅÃ
+    // íŒŒì¼ ì„ íƒ
     int choice;
-    printf("Å¸ÀÚ ¿¬½ÀÀ» ÇÏ°í ½ÍÀº ÆÄÀÏÀÇ ¹øÈ£¸¦ ÀÔ·ÂÇÏ¼¼¿ä: ");
+    printf("íƒ€ì ì—°ìŠµì„ í•˜ê³  ì‹¶ì€ íŒŒì¼ì˜ ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ì„¸ìš”: ");
     scanf("%d", &choice);
 
-    // ÀÔ·Â ¹öÆÛ¿¡ ³²¾Æ ÀÖ´Â °³Çà ¹®ÀÚ Á¦°Å
+    // ì…ë ¥ ë²„í¼ì— ë‚¨ì•„ ìˆëŠ” ê°œí–‰ ë¬¸ì ì œê±°
     int ch;
     while((ch = getchar()) != '\n' && ch != EOF);
 
     if(choice < 1 || choice > num_files){
-        printf("Àß¸øµÈ ¼±ÅÃÀÔ´Ï´Ù.\n");
+        printf("ì˜ëª»ëœ ì„ íƒì…ë‹ˆë‹¤.\n");
 
         return 1;
     }
 
-    // ¼±ÅÃÇÑ ÆÄÀÏ ¿­±â
+    // ì„ íƒí•œ íŒŒì¼ ì—´ê¸°
     FILE *file = fopen(files[choice - 1], "r");
     if(file == NULL){
-        perror("ÆÄÀÏÀ» ¿­ ¼ö ¾ø½À´Ï´Ù.");
+        perror("íŒŒì¼ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
 
         return 1;
     }
@@ -46,36 +57,60 @@ int main(){
     char user_input[256];
     int total_characters = 0;
     int incorrect_characters = 0;
-
-    // Å¸ÀÌ¸Ó ½ÃÀÛ
+    wchar_t line_wstr[100] = {0};
+    wchar_t user_wstr[100] = {0};
+    // íƒ€ì´ë¨¸ ì‹œì‘
     // start_time();
 
-    while(fgets(line, sizeof(line), file)){
+    while(fgets(line, sizeof(line), file) != NULL){
         
         printf("%s", line);
-
-        // »ç¿ëÀÚ ÀÔ·Â ¹Ş±â
+        // ì‚¬ìš©ì ì…ë ¥ ë°›ê¸°
         fgets(user_input, sizeof(user_input), stdin);
 
-        // '\n' ¹®ÀÚ Á¦°Å
-        user_input[strcspn(user_input, "\n")] = 0;
+        // '\n' ë¬¸ì ì œê±°
+        line[strcspn(line, "\n")] = '\0';
+        user_input[strcspn(user_input, "\n")] = '\0';
 
-        // Æ²¸° ±ÛÀÚ ¼ö °è»ê
-        // incorrect_characters += ;
-        total_characters += strlen(line);
+        int line_len = mbstowcs(line_wstr, line, sizeof(line_wstr) / sizeof(line_wstr[0]))-1;
+        int user_len = mbstowcs(user_wstr, user_input, sizeof(user_wstr) / sizeof(user_wstr[0]))-1;
+        int miss_count = comp_string(line_len, user_len, line_wstr, user_wstr);
+
+        // í‹€ë¦° ê¸€ì ìˆ˜ ê³„ì‚°
+        incorrect_characters += miss_count;
+
+        total_characters += line_len;
+        // printf("[line_len: %d], [miss_count: %d]\n", line_len, miss_count);
     }
 
-    fclose(file);  // ÆÄÀÏ ´İ±â
+    fclose(file);  // íŒŒì¼ ë‹«ê¸°
 
-    // Å¸ÀÌ¸Ó Á¾·á
+    // íƒ€ì´ë¨¸ ì¢…ë£Œ
     // double time_taken = end_time();
 
-    // Åë°è °è»ê
+    // í†µê³„ ê³„ì‚°
 
-    // Åë°è Ãâ·Â
-    // printf("\nÃÑ °É¸° ½Ã°£: %.2fÃÊ\n", time_taken);
-    // printf("Å¸¼ö: ");
-    // printf("¿ÀÅ¸À²: ");
+    // í†µê³„ ì¶œë ¥
+    // printf("\nì´ ê±¸ë¦° ì‹œê°„: %.2fì´ˆ\n", time_taken);
+    // printf("íƒ€ìˆ˜: ");
+    // printf("ì˜¤íƒ€ìœ¨: ");
 
     return 0;
 }
+int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY){
+    int miss_count = 0;
+
+    int tmp_len = FGETS_LEN;
+    if(FGETS_LEN != STDIN_LEN && STDIN_LEN > FGETS_LEN) tmp_len = STDIN_LEN;
+    // printf("[FGETS_LEN / tmp_len] : [%d / %d]\n",FGETS_LEN, tmp_len);
+    for(int i=0; i < tmp_len; i++){
+        // printf("In comp_string: [Line: %lc]\t[User: %lc]\n", FGETS_ARRAY[i], STDIN_ARRAY[i]);
+        if(FGETS_ARRAY[i] != STDIN_ARRAY[i]){
+            
+            miss_count++;
+        }
+    }
+    
+    int result_miss_count = ((miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count); 
+    return result_miss_count;
+}    
