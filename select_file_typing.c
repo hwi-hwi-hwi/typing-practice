@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <wchar.h>
 #include <stdlib.h>
+#include <time.h>    // 타이머 기능 위해 추가
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -29,8 +30,7 @@ int main(){
     // 타자 연습 파일 목록 출력
     printf("타자 연습 파일 목록:\n");
     int i;
-    for(i = 0; i < num_files; i++){
-
+    for (i = 0; i < num_files; i++) {
         printf("%d. %s\n", i + 1, files[i]);
     }
 
@@ -41,19 +41,16 @@ int main(){
 
     // 입력 버퍼에 남아 있는 개행 문자 제거
     int ch;
-    while((ch = getchar()) != '\n' && ch != EOF);
+    while ((ch = getchar()) != '\n' && ch != EOF);
 
-    if(choice < 1 || choice > num_files){
+    if (choice < 1 || choice > num_files) {
         printf("잘못된 선택입니다.\n");
-
         return 1;
     }
 
-    // 선택한 파일 열기
-    FILE *file = fopen(files[choice - 1], "r");
-    if(file == NULL){
+    FILE* file = fopen(files[choice - 1], "r");
+    if (file == NULL) {
         perror("파일을 열 수 없습니다.");
-
         return 1;
     }
 
@@ -66,9 +63,18 @@ int main(){
     wchar_t user_wstr[BUFSIZE] = {0};
     // 타이머 시작
     // start_time();
+    // 시작 시간을 현재 시간으로 저장
+    time_t start_timestamp = time(NULL);
+    struct tm* start_time = localtime(&start_timestamp);
+    printf("\n시작 시간: %d시 %d분 %d초\n",
+        start_time->tm_hour,
+        start_time->tm_min,
+        start_time->tm_sec);
 
-    while(fgets(line, BUFSIZE, file) != NULL){
-        
+    // 타이머 시작
+    clock_t start_clock = clock();
+
+    while (fgets(line, sizeof(line), file)) {
         printf("%s", line);
         // 사용자 입력 받기
         if(fgets(user_input, BUFSIZE, stdin) == NULL)
@@ -88,10 +94,14 @@ int main(){
         total_characters += line_len;
 
     }
+    fclose(file);
 
-    fclose(file);  // 파일 닫기
+    // 종료 시간 저장
+    time_t end_timestamp = time(NULL);
+    struct tm* end_time = localtime(&end_timestamp);
+    clock_t end_clock = clock();
 
-    // 타이머 종료
+    // Ÿ�̸� ����
     // double time_taken = end_time();
 
     // 통계 계산
