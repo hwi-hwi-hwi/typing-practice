@@ -32,6 +32,7 @@ void show_stat(int total_line, int typing_line, int total_miss, int total_time);
 void exit_process();
 
 int total_correct_characters=0, total_typing_characters, incorrect_characters=0;
+const char *file_name;
 FILE *file, *save;
 
 int main(){
@@ -74,11 +75,11 @@ int main(){
 FILE* choose_file(){
 // 파일 이름들 배열로 저장
     const char *files[] = {
-        "typing_sentences/애국가.txt",
-        "typing_sentences/별_헤는_밤.txt",
-        "typing_sentences/님의_침묵.txt",
-        "typing_sentences/향수.txt",
-        "typing_sentences/test_txt.txt"
+        "애국가",
+        "별_헤는_밤",
+        "님의_침묵",
+        "향수",
+        "test_txt"
     };
     int num_files = sizeof(files) / sizeof(files[0]);
 
@@ -102,8 +103,10 @@ FILE* choose_file(){
         printf("잘못된 선택입니다.\n");
         return NULL;
     }
-
-    FILE *tmp_file = fopen(files[choice - 1], "r");
+    file_name = files[choice - 1];
+    char *tmp_name; sprintf(tmp_name, "%s/%s.%s", "typing_sentences", file_name, "txt");
+    
+    FILE *tmp_file = fopen(tmp_name, "r");
     if (tmp_file == NULL) {
         perror("파일을 열 수 없습니다.");
         return NULL;
@@ -158,14 +161,14 @@ void show_stat(int total_line, int typing_line, int total_miss, int total_time){
     double accuracy = (1 - ((double) total_miss / total_line))*100;
 
     printf("======================================== RESULT ========================================\n\n");
-    printf("|%20s|%20s|%20s|%20s|%20s|\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율"); 
-    printf("|%15d |%15.3f |%14.3f |%16.3f |%16.3f |\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy);
+    printf("|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율", "선택한 파일"); 
+    printf("|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy, file_name);
     printf("\n======================================== RECORD ========================================\n\n");
 
     while(fgets(line, BUFSIZE, save) != NULL){
         printf("%s\n", line);
     }
-    fprintf(save, "|%15d |%15.3f |%14.3f |%16.3f |%16.3f |\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy);
+    fprintf(save, "|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy, file_name);
 }
 
 void exit_process(){
