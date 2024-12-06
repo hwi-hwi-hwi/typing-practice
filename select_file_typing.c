@@ -11,13 +11,68 @@
 #include <sys/stat.h>
 
 #define BUFSIZE 256
+struct time_struct {
+    time_t t;
+    char buf[BUFSIZE];
+    struct tm *lt;
+};
 
-int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY);
-void show_stat(int total_line, int total_miss, int total_time);
+struct buf_set {
+    char line[BUFSIZE];
+    char user_input[BUFSIZE];
+    wchar_t line_wstr[BUFSIZE];
+    wchar_t user_wstr[BUFSIZE];
+};
+
+FILE* choose_file();
+void pre_processing(struct buf_set *buf, int *line_len, int *user_len);
+struct time_struct time_check();
+void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY, int *count);
+void show_stat(int total_line, int typing_line, int total_miss, int total_time);
+void exit_process();
+
+int total_correct_characters=0, total_typing_characters, incorrect_characters=0;
+FILE *file, *save;
 
 int main(){
     setlocale(LC_ALL, "ko_KR.UTF-8");
-    // 파일 이름들 배열로 저장
+    
+    struct buf_set buf = {{0}, };
+    struct time_struct start_time, end_time;
+
+    if((file = choose_file()) == NULL){
+        perror("잘못된 파일 선택으로 종료되었습니다.");
+        exit(-1);
+    }
+        
+    // 타이머 시작
+    start_time = time_check();
+
+    while (fgets(buf.line, sizeof(buf.line), file)) {
+        printf("%s", buf.line);
+        // 사용자 입력 받기
+        if(fgets(buf.user_input, BUFSIZE, stdin) == NULL)
+            perror("user_input error");
+        printf("\n");
+        // 문자열 전처리 및 비교계산.
+        int miss_count=0, line_len=0, user_len=0;
+        pre_processing(&buf, &line_len, &user_len);
+        comp_string(line_len, user_len, buf.line_wstr, buf.user_wstr, &miss_count);
+    }
+
+    // 종료 시간 저장
+    end_time = time_check();
+
+    // 통계 계산
+    show_stat(total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
+    if(atexit(exit_process) ){
+        perror("on_exit: no fclosed");
+        exit(-1);
+    }
+    return 0;
+}
+FILE* choose_file(){
+// 파일 이름들 배열로 저장
     const char *files[] = {
         "typing_sentences/애국가.txt",
         "typing_sentences/별_헤는_밤.txt",
@@ -45,71 +100,34 @@ int main(){
 
     if (choice < 1 || choice > num_files) {
         printf("잘못된 선택입니다.\n");
-        return 1;
+        return NULL;
     }
 
-    FILE* file = fopen(files[choice - 1], "r");
-    if (file == NULL) {
+    FILE *tmp_file = fopen(files[choice - 1], "r");
+    if (tmp_file == NULL) {
         perror("파일을 열 수 없습니다.");
-        return 1;
+        return NULL;
     }
-
-    char line[BUFSIZE];
-    char user_input[BUFSIZE];
-    int total_characters = 0;
-    int incorrect_characters = 0;
-
-    wchar_t line_wstr[BUFSIZE] = {0};
-    wchar_t user_wstr[BUFSIZE] = {0};
-    // 타이머 시작
-    // start_time();
-    // 시작 시간을 현재 시간으로 저장
-    time_t start_timestamp = time(NULL);
-    struct tm* start_time = localtime(&start_timestamp);
-    printf("\n시작 시간: %d시 %d분 %d초\n",
-        start_time->tm_hour,
-        start_time->tm_min,
-        start_time->tm_sec);
-
-    // 타이머 시작
-    clock_t start_clock = clock();
-
-    while (fgets(line, sizeof(line), file)) {
-        printf("%s", line);
-        // 사용자 입력 받기
-        if(fgets(user_input, BUFSIZE, stdin) == NULL)
-            perror("user_input error");
-
-        // '\n' 문자 제거
-        line[strcspn(line, "\n")] = '\0';
-        user_input[strcspn(user_input, "\n")] = '\0';
-
-        int line_len = mbstowcs(line_wstr, line, sizeof(line_wstr) / sizeof(line_wstr[0]));
-        int user_len = mbstowcs(user_wstr, user_input, sizeof(user_wstr) / sizeof(user_wstr[0]));
-        int miss_count = comp_string(line_len, user_len, line_wstr, user_wstr);
-        // printf("[line_len: %d], [user_len: %d], [miss_count: %d]\n", line_len, user_len, miss_count);
-        // 틀린 글자 수 계산
-        incorrect_characters += miss_count;
-
-        total_characters += line_len;
-
-    }
-    fclose(file);
-
-    // 종료 시간 저장
-    time_t end_timestamp = time(NULL);
-    struct tm* end_time = localtime(&end_timestamp);
-    clock_t end_clock = clock();
-
-    // Ÿ�̸� ����
-    // double time_taken = end_time();
-
-    // 통계 계산
-    show_stat(total_characters, incorrect_characters, 100);
-
-    return 0;
+    return tmp_file;
 }
-int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY){
+
+struct time_struct time_check(){
+    struct time_struct time_val;
+    time_val.t = time(NULL);
+    time_val.lt = localtime(&(time_val.t));
+    strftime(time_val.buf, BUFSIZE, "%c\n", time_val.lt);
+    return time_val;
+} 
+
+void pre_processing(struct buf_set *buf, int *line_len, int *user_len){
+    buf -> line[strcspn(buf->line, "\n")] = '\0';
+    buf -> user_input[strcspn(buf->user_input, "\n")] = '\0';
+
+    *line_len += mbstowcs(buf->line_wstr, buf->line, sizeof(buf->line_wstr) / sizeof(buf->line_wstr[0]));
+    *user_len += mbstowcs(buf->user_wstr, buf->user_input, sizeof(buf->user_wstr) / sizeof(buf->user_wstr[0]));
+}
+
+void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY, int *count){
     int miss_count = 0;
 
     int tmp_len = FGETS_LEN;
@@ -122,24 +140,36 @@ int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STD
         }
     }
     
-    int result_miss_count = ((miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count); 
-    return result_miss_count;
+    int result_miss_count = ((miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count);
+
+    incorrect_characters += result_miss_count;
+    total_correct_characters += FGETS_LEN;
+    total_typing_characters += STDIN_LEN;
+    *count += result_miss_count;
 }
 
-void show_stat(int total_line, int total_miss, int total_time){
+void show_stat(int total_line, int typing_line, int total_miss, int total_time){
+    save = fopen("record.txt", "r+t");
     char line[BUFSIZE]; 
-    FILE* file = fopen("record.txt", "a+t");
+    
     double typing_per_min = (double) total_line * 60 / total_time;
+    double typer_per_min = (double) typing_line * 60 / total_time;
     double typing_speed = typing_per_min / 5;  
-    printf("[total_line: %d], [total_miss: %d], [total_time: %d]\n", total_line, total_miss, total_time);
     double accuracy = (1 - ((double) total_miss / total_line))*100;
-    printf("=================================RESULT=================================\n");
-    printf("%15s|%15s|%15s|%15s|\n", "걸린 시간", "평균 타수", "정확도", "오타율"); 
-    printf("%10d |%10.3f |%11.3f |%11.3f |\n", total_time, typing_speed, accuracy, 100-accuracy);
-    printf("=================================RECORD=================================\n");
-    while(fgets(line, BUFSIZE, file) != NULL){
+
+    printf("======================================== RESULT ========================================\n\n");
+    printf("|%20s|%20s|%20s|%20s|%20s|\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율"); 
+    printf("|%15d |%15.3f |%14.3f |%16.3f |%16.3f |\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy);
+    printf("\n======================================== RECORD ========================================\n\n");
+
+    while(fgets(line, BUFSIZE, save) != NULL){
         printf("%s\n", line);
     }
-    fprintf(file, "%10d |%10.3f |%11.3f |%11.3f |\n", total_time, typing_speed, accuracy, 100-accuracy);
+    fprintf(save, "|%15d |%15.3f |%14.3f |%16.3f |%16.3f |\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy);
 }
 
+void exit_process(){
+    fclose(file);
+    fclose(save);
+    exit(1);
+}
