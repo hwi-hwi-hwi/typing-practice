@@ -1,35 +1,35 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>    // Å¸ÀÌ¸Ó ±â´É À§ÇØ Ãß°¡
+#include <time.h>    // íƒ€ì´ë¨¸ ê¸°ëŠ¥ ìœ„í•´ ì¶”ê°€
 
 int main() {
     const char* files[] = {
-        "typing_sentences/¾Ö±¹°¡.txt",
-        "typing_sentences/º°_Çì´Â_¹ã.txt",
-        "typing_sentences/´ÔÀÇ_Ä§¹¬.txt",
-        "typing_sentences/Çâ¼ö.txt"
+        "typing_sentences/ì• êµ­ê°€.txt",
+        "typing_sentences/ë³„_í—¤ëŠ”_ë°¤.txt",
+        "typing_sentences/ë‹˜ì˜_ì¹¨ë¬µ.txt",
+        "typing_sentences/í–¥ìˆ˜.txt"
     };
     int num_files = sizeof(files) / sizeof(files[0]);
-    printf("Å¸ÀÚ ¿¬½À ÆÄÀÏ ¸ñ·Ï:\n");
+    printf("íƒ€ì ì—°ìŠµ íŒŒì¼ ëª©ë¡:\n");
     int i;
     for (i = 0; i < num_files; i++) {
         printf("%d. %s\n", i + 1, files[i]);
     }
 
     int choice;
-    printf("Å¸ÀÚ ¿¬½ÀÀ» ÇÏ°í ½ÍÀº ÆÄÀÏÀÇ ¹øÈ£¸¦ ÀÔ·ÂÇÏ¼¼¿ä: ");
+    printf("íƒ€ì ì—°ìŠµì„ í•˜ê³  ì‹¶ì€ íŒŒì¼ì˜ ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ì„¸ìš”: ");
     scanf("%d", &choice);
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF);
 
     if (choice < 1 || choice > num_files) {
-        printf("Àß¸øµÈ ¼±ÅÃÀÔ´Ï´Ù.\n");
+        printf("ì˜ëª»ëœ ì„ íƒì…ë‹ˆë‹¤.\n");
         return 1;
     }
 
     FILE* file = fopen(files[choice - 1], "r");
     if (file == NULL) {
-        perror("ÆÄÀÏÀ» ¿­ ¼ö ¾ø½À´Ï´Ù.");
+        perror("íŒŒì¼ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
         return 1;
     }
 
@@ -38,15 +38,15 @@ int main() {
     int total_characters = 0;
     int incorrect_characters = 0;
 
-    // ½ÃÀÛ ½Ã°£À» ÇöÀç ½Ã°£À¸·Î ÀúÀå
+    // ì‹œì‘ ì‹œê°„ì„ í˜„ì¬ ì‹œê°„ìœ¼ë¡œ ì €ì¥
     time_t start_timestamp = time(NULL);
     struct tm* start_time = localtime(&start_timestamp);
-    printf("\n½ÃÀÛ ½Ã°£: %d½Ã %dºĞ %dÃÊ\n",
+    printf("\nì‹œì‘ ì‹œê°„: %dì‹œ %dë¶„ %dì´ˆ\n",
         start_time->tm_hour,
         start_time->tm_min,
         start_time->tm_sec);
 
-    // Å¸ÀÌ¸Ó ½ÃÀÛ
+    // íƒ€ì´ë¨¸ ì‹œì‘
     clock_t start_clock = clock();
 
     while (fgets(line, sizeof(line), file)) {
@@ -66,23 +66,23 @@ int main() {
     }
     fclose(file);
 
-    // Á¾·á ½Ã°£ ÀúÀå
+    // ì¢…ë£Œ ì‹œê°„ ì €ì¥
     time_t end_timestamp = time(NULL);
     struct tm* end_time = localtime(&end_timestamp);
     clock_t end_clock = clock();
 
-    // ½Ã°£ °è»ê
+    // ì‹œê°„ ê³„ì‚°
     double time_taken = (double)(end_clock - start_clock) / CLOCKS_PER_SEC;
     double accuracy = 100.0 * (total_characters - incorrect_characters) / total_characters;
     double typing_speed = (total_characters / 2.0) / (time_taken / 60.0);
 
-    printf("\nÁ¾·á ½Ã°£: %d½Ã %dºĞ %dÃÊ\n",
+    printf("\nì¢…ë£Œ ì‹œê°„: %dì‹œ %dë¶„ %dì´ˆ\n",
         end_time->tm_hour,
         end_time->tm_min,
         end_time->tm_sec);
-    printf("\nÃÑ °É¸° ½Ã°£: %.2fÃÊ\n", time_taken);
-    printf("Å¸¼ö: %.2fÅ¸/ºĞ\n", typing_speed);
-    printf("Á¤È®µµ: %.2f%%\n", accuracy);
+    printf("\nì´ ê±¸ë¦° ì‹œê°„: %.2fì´ˆ\n", time_taken);
+    printf("íƒ€ìˆ˜: %.2fíƒ€/ë¶„\n", typing_speed);
+    printf("ì •í™•ë„: %.2f%%\n", accuracy);
 
     return 0;
 }
