@@ -136,8 +136,6 @@ void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* ST
 
     int result_miss_count = ((miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count);
 
-    int result_miss_count = (miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count;
-
     incorrect_characters += result_miss_count;
     total_correct_characters += FGETS_LEN;
     total_typing_characters += STDIN_LEN;
