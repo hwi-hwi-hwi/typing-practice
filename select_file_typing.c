@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <unistd.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+#include <fcntl.h>
+
 #define BUFSIZE 256
 
 struct time_struct {
@@ -21,6 +26,7 @@ struct buf_set {
 };
 
 FILE* choose_file();
+void remove_record();
 void pre_processing(struct buf_set* buf, int* line_len, int* user_len);
 struct time_struct time_check();
 void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count);
@@ -74,24 +80,40 @@ FILE* choose_file(){
         "향수",
         "test"
     };
+    const char *utilites[] = {
+        "기록 파일 초기화하기"
+    };
     int num_files = sizeof(files) / sizeof(files[0]);
+    const int num_utilities = sizeof(utilites) / sizeof(utilites[0]);
 
-    printf("타자 연습 파일 목록:\n");
-    for (int i = 0; i < num_files; i++) {
-        printf("%d. %s\n", i + 1, files[i]);
-    }
-
+    void (*func[])(void) = {remove_record};
     int choice;
-    printf("타자 연습을 하고 싶은 파일의 번호를 입력하세요: ");
-    scanf("%d", &choice);
 
-    while (getchar() != '\n');
+    do {
+        printf("========== 타자 연습 파일 목록 ==========\n");
+        for (int i = 0; i < num_files; i++) {
+            printf("%d. %s\n", i + 1, files[i]);
+        }
+        printf("========== 유틸리티 기능 목록  ==========\n");
+        for (int i = 0; i< num_utilities; i++){
+            printf("%d. %s\n", i + num_files + 1, utilites[i]);
+        }
+        
+        printf("타자 연습을 하고 싶은 파일의 번호를 입력하세요: ");
+        scanf("%d", &choice);
+        while (getchar() != '\n');
 
-    if (choice < 1 || choice > num_files) {
-        printf("잘못된 선택입니다.\n");
-        return NULL;
-    }
-
+        if (choice < 1 || choice > num_files + num_utilities) {
+            printf("잘못된 선택입니다.\n");
+            return NULL;
+        }
+        else if(choice >= num_files+1 && choice < num_files + num_utilities+1){
+            func[choice - num_files - 1]();
+        }
+        else {break;}
+        
+    } while(1);
+    
     file_name = files[choice - 1];
     char *tmp_name = (char *)malloc(sizeof(char) * 256);
     if(tmp_name == NULL){
@@ -107,7 +129,10 @@ FILE* choose_file(){
     }
     return tmp_file;
 }
-
+void remove_record(){
+    int fd = open("record.txt", O_TRUNC | O_RDWR);
+    close(fd);
+}
 struct time_struct time_check() {
     struct time_struct time_val;
     time_val.t = time(NULL);
