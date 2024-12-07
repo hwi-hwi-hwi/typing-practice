@@ -12,8 +12,7 @@
 
 #define BUFSIZE 256
 
-<<<<<<< HEAD int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY);
-void show_stat(int total_line, int total_miss, int total_time);
+<<<<<<< HEAD int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY); void show_stat(int total_line, int total_miss, int total_time);
 
 <<<<<<< HEAD
 int main()
@@ -372,16 +371,18 @@ int main()
                             double accuracy = (1 - ((double)total_miss / total_line)) * 100;
 
                             printf("==================================================== RESULT ====================================================\n\n");
-                            printf("|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율", "선택한 파일");
-                            printf("|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n", total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name);
+                            printf("| %-10s | %-15s | %-15s | %-10s | %-10s | %-20s |\n",
+                                   "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율", "선택한 파일");
+                            printf("| %-10d | %-15.3f | %-15.3f | %-10.3f | %-10.3f | %-20s |\n",
+                                   total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name);
                             printf("\n==================================================== RECORD ====================================================\n\n");
 
                             while (fgets(fline, BUFSIZE, save) != NULL)
                             {
-                                printf("%s\n", fline);
+                                printf("%s", fline);
                             }
 
-                            fprintf(save, "|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n",
+                            fprintf(save, "| %-10d | %-15.3f | %-15.3f | %-10.3f | %-10.3f | %-20s |\n",
                                     total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name);
                         }
 
