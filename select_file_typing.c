@@ -12,7 +12,8 @@
 
 #define BUFSIZE 256
 
-<<<<<<< HEAD int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY); void show_stat(int total_line, int total_miss, int total_time);
+<<<<<<< HEAD int comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t *FGETS_ARRAY, wchar_t *STDIN_ARRAY);
+void show_stat(int total_line, int total_miss, int total_time);
 
 <<<<<<< HEAD
 int main()
