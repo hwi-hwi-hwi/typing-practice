@@ -12,6 +12,17 @@
 
 #define BUFSIZE 256
 
+const char *files[] = {
+        "애국가",
+        "별_헤는_밤",
+        "님의_침묵",
+        "향수",
+        "test"
+};
+const char *utilites[] = {
+    "기록 파일 초기화하기"
+};
+
 struct time_struct {
     time_t t;
     char buf[BUFSIZE];
@@ -25,17 +36,13 @@ struct buf_set {
     wchar_t user_wstr[BUFSIZE];
 };
 
-FILE* choose_file();
+FILE* choose_file(char **file_name);
 void remove_record();
 void pre_processing(struct buf_set* buf, int* line_len, int* user_len);
 struct time_struct time_check();
-void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count);
-void show_stat(int total_line, int typing_line, int total_miss, int total_time);
-void exit_process();
-
-int total_correct_characters = 0, total_typing_characters, incorrect_characters = 0;
-const char* file_name;
-FILE* file, * save;
+void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count, int *ic, int *tcc, int *ttc);
+void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int total_miss, int total_time);
+// void exit_process();
 
 int main() {
     setlocale(LC_ALL, "ko_KR.UTF-8");
@@ -43,11 +50,16 @@ int main() {
     struct buf_set buf = {{0}, };
     struct time_struct start_time, end_time;
 
-    if ((file = choose_file()) == NULL) {
+    int total_correct_characters=0, total_typing_characters=0, incorrect_characters=0;
+    char file_name[BUFSIZE], user_name[BUFSIZE];
+    FILE **file, **save;
+
+    // login();
+    if ((file = choose_file(&file_name)) == NULL) {
         perror("잘못된 파일 선택으로 종료되었습니다.");
         exit(-1);
     }
-
+    printf("file_name: %s\n", file_name);
     // 타이머 시작
     start_time = time_check();
 
@@ -58,31 +70,20 @@ int main() {
         printf("\n");
         int miss_count = 0, line_len = 0, user_len = 0;
         pre_processing(&buf, &line_len, &user_len);
-        comp_string(line_len, user_len, buf.line_wstr, buf.user_wstr, &miss_count);
+        comp_string(line_len, user_len, buf.line_wstr, buf.user_wstr, &miss_count, &incorrect_characters, &total_correct_characters, &total_typing_characters);
     }
 
     end_time = time_check();
-    show_stat(total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
-
-    if(atexit(exit_process) ){
-        perror("on_exit: no fclosed");
-        exit(-1);
-    }
+    show_stat(save, file_name, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
+    fclose(file);
+    // if(atexit(exit_process) ){
+    //     perror("on_exit: no fclosed");
+    //     exit(-1);
+    // }
     return 0;
 }
 
-FILE* choose_file(){
-// 파일 이름들 배열로 저장
-    const char *files[] = {
-        "애국가",
-        "별_헤는_밤",
-        "님의_침묵",
-        "향수",
-        "test"
-    };
-    const char *utilites[] = {
-        "기록 파일 초기화하기"
-    };
+FILE* choose_file(char **file_name){
     int num_files = sizeof(files) / sizeof(files[0]);
     const int num_utilities = sizeof(utilites) / sizeof(utilites[0]);
 
@@ -113,15 +114,15 @@ FILE* choose_file(){
         else {break;}
         
     } while(1);
-    
-    file_name = files[choice - 1];
+
+    *file_name = files[choice-1];
+    // file_name = files[choice-1];
     char *tmp_name = (char *)malloc(sizeof(char) * 256);
     if(tmp_name == NULL){
         perror("Memory allocation failed");
         exit(-1);
     }
-    sprintf(tmp_name, "%s/%s.%s", "typing_sentences", file_name, "txt");
-
+    sprintf(tmp_name, "%s/%s.%s", "typing_sentences", files[choice - 1], "txt");
     FILE *tmp_file = fopen(tmp_name, "r");
     if (tmp_file == NULL) {
         perror("파일을 열 수 없습니다");
@@ -149,7 +150,7 @@ void pre_processing(struct buf_set* buf, int* line_len, int* user_len) {
     *user_len += mbstowcs(buf->user_wstr, buf->user_input, sizeof(buf->user_wstr) / sizeof(buf->user_wstr[0]));
 }
 
-void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count) {
+void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count, int *ic, int *tcc, int *ttc) {
     int miss_count = 0;
     int tmp_len = (FGETS_LEN > STDIN_LEN) ? FGETS_LEN : STDIN_LEN;
 
@@ -161,13 +162,13 @@ void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* ST
 
     int result_miss_count = ((miss_count >= FGETS_LEN) ? FGETS_LEN : miss_count);
 
-    incorrect_characters += result_miss_count;
-    total_correct_characters += FGETS_LEN;
-    total_typing_characters += STDIN_LEN;
+    *ic += result_miss_count;  // incorrect_characters
+    *tcc += FGETS_LEN;  // total_correct_characters
+    *ttc += STDIN_LEN;  // total_typing_characters
     *count += result_miss_count;
 }
 
-void show_stat(int total_line, int typing_line, int total_miss, int total_time){
+void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int total_miss, int total_time){
     save = fopen("record.txt", "r+t");
     char fline[BUFSIZE];
 
@@ -187,13 +188,13 @@ void show_stat(int total_line, int typing_line, int total_miss, int total_time){
 
     fprintf(save, "|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n",
         total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name);
-}
-
-void exit_process(){
-    printf("[atexit]: fclose() start..\n");
-    fclose(file);
     fclose(save);
-    printf("[atexit]: fclose() end..\n");
-    exit(1);
-
 }
+
+// void exit_process(){
+//     printf("[atexit]: fclose() start..\n");
+//     fclose(file);
+//     fclose(save);
+//     printf("[atexit]: fclose() end..\n");
+//     exit(1);
+// }
