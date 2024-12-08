@@ -59,7 +59,7 @@ int main() {
     struct time_struct start_time, end_time;
 
     int total_correct_characters=0, total_typing_characters=0, incorrect_characters=0;
-    char *file_name, *user_name;
+    char *file_name; volatile char user_name[BUFSIZE];
     FILE *file, *save;
 
     if((flag=setjmp(jump_buf)) != 0){
@@ -104,6 +104,7 @@ int main() {
     }
 
     end_time = time_check();
+    printf("[ID:%s], [PW:%s], [user_name:%s]", ID, PASSWORD, user_name);
     show_stat(save, file_name, user_name, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
     fclose(file);
     // if(atexit(exit_process) ){
