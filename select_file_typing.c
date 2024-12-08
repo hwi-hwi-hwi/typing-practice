@@ -104,7 +104,7 @@ int main() {
     }
 
     end_time = time_check();
-    show_stat(save, file_name, ID, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
+    show_stat(save, file_name, user_name, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
     fclose(file);
     // if(atexit(exit_process) ){
     //     perror("on_exit: no fclosed");
@@ -144,7 +144,7 @@ void login(char **user_name, int flag){
             scanf("%s", typing_password); while (getchar() != '\n');
         }
         else{
-            strcpy(typing_id, *user_name);
+            strcpy(typing_id, user_name);
             strcpy(typing_password, PASSWORD);
         }
         // printf("user typing: [ID:%s], [PW:%s]\n", typing_id, typing_password);
