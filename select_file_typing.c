@@ -71,14 +71,14 @@ int main() {
             flag=0;
         }
         else if(flag==110) { // 110: 계정 생성 시, 중복 ID 존재.
-            system("clear");
+            // system("clear");
             printf("<------------- [ErrorCode: %d]계정 생성시에 중복되는 ID가 존재하여 처음으로 되돌아갑니다. ------------->\n", flag);
             flag=0;
         }
         else if(flag==200){ // 200: 계정 생성 시, ID 중복 확인하러 longjmp
         }
         else if(flag==201){ // 201: 중복 검색 성공 후, 복귀 요청 시그널
-            system("clear");
+            // system("clear");
             printf("<------------- 중복되는 아이디가 없으므로 계정 생성 후 로그인합니다. ------------->\n!");
             flag=202; // 계정 중복 검색 성공 시그널.
         }
@@ -151,16 +151,23 @@ void login(char **user_name, int flag){
         // printf("user typing: [ID:%s], [PW:%s]\n", typing_id, typing_password);
 
         while(fgets(buf, BUFSIZE, login_file) != 0){
-            buf[strcspn(buf, "\n")] = '\0';
+            buf[strcspn(buf, "\n")]='\0';
+            
             // printf("가져온 buf: [%s]\n", buf);
             char *seperator = strchr(buf, ',');
-
-            strncpy(ID, buf, seperator-buf);
+            char tmp_ID[seperator-buf];
+            // strncpy(tmp_ID, buf, sizeof(char)*(seperator-buf));
+            for(int i=0; i<(seperator-buf); i++){
+                tmp_ID[i] = buf[i];
+            }
+            // printf("1[buf: %s], [user_name: %s], [ID: %s], [PW: %s], [tmp_ID: %s], [typing_id: %s]\n", buf, user_name, ID, PASSWORD, tmp_ID, typing_id);
             // printf("분리한 ID: %s\n", ID);
-            if(strcmp(ID, typing_id) == 0){
+            if(strcmp(tmp_ID, typing_id) == 0){
                 no_id = 0;
+                strcpy(ID, tmp_ID);
                 strncpy(PASSWORD, seperator+1, buf+(strlen(buf)-1)-seperator);
                 // printf("분리한 PASSWORD: %s\n", PASSWORD);
+                // printf("2[buf: %s], [user_name: %s], [ID: %s], [PW: %s], [tmp_ID: %s]\n\n", buf, user_name, ID, PASSWORD, tmp_ID);
                 if(flag==200) longjmp(jump_buf, 110);
                 
                 if(strcmp(PASSWORD, typing_password) != 0){
