@@ -21,7 +21,8 @@ const char *files[] = {
         "test"
 };
 const char *utilites[] = {
-    "기록 파일 초기화하기"
+    "기록 파일 초기화하기",
+    "랭킹표 확인"
 };
 
 struct time_struct {
@@ -40,10 +41,11 @@ struct buf_set {
 void login(char **user_name, int flag);
 FILE* choose_file(char **file_name);
 void remove_record();
+void show_record();
 void pre_processing(struct buf_set* buf, int* line_len, int* user_len);
 struct time_struct time_check();
 void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* STDIN_ARRAY, int* count, int *ic, int *tcc, int *ttc);
-void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int total_miss, int total_time);
+void show_stat(FILE *save, char *file_name, char *username, int total_line, int typing_line, int total_miss, int total_time);
 // void exit_process();
 
 jmp_buf jump_buf;
@@ -102,7 +104,7 @@ int main() {
     }
 
     end_time = time_check();
-    show_stat(save, file_name, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
+    show_stat(save, file_name, ID, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
     fclose(file);
     // if(atexit(exit_process) ){
     //     perror("on_exit: no fclosed");
@@ -142,7 +144,7 @@ void login(char **user_name, int flag){
             scanf("%s", typing_password); while (getchar() != '\n');
         }
         else{
-            strcpy(typing_id, ID);
+            strcpy(typing_id, *user_name);
             strcpy(typing_password, PASSWORD);
         }
         // printf("user typing: [ID:%s], [PW:%s]\n", typing_id, typing_password);
@@ -163,7 +165,8 @@ void login(char **user_name, int flag){
                 if(strcmp(PASSWORD, typing_password) != 0){
                     longjmp(jump_buf, 101);
                 }
-                *user_name = ID;
+                // *user_name = ID;
+                strcpy(user_name, ID);
                 printf("로그인 성공! [login: %s], [password: %s]\n", ID, PASSWORD);
                 break;
             }
@@ -185,10 +188,11 @@ void login(char **user_name, int flag){
             scanf("%s", ID);
             printf("생성할 PW를 입력하시오. [한글과 , 기호는 사용불가.]\n");
             scanf("%s", PASSWORD);
+            strcpy(user_name, ID);
             longjmp(jump_buf, 200);
         }
         else if(flag==202) {
-            fprintf(login_file, "%s,%s\n", ID, PASSWORD);
+            fprintf(login_file, "%s,%s\n", user_name, PASSWORD);
         }
         else printf("Unknown Flag\n");
         
@@ -200,7 +204,7 @@ FILE* choose_file(char **file_name){
     int num_files = sizeof(files) / sizeof(files[0]);
     const int num_utilities = sizeof(utilites) / sizeof(utilites[0]);
 
-    void (*func[])(void) = {remove_record};
+    void (*func[])(void) = {remove_record, show_record};
     int choice;
 
     do {
@@ -247,6 +251,18 @@ void remove_record(){
     int fd = open("record.txt", O_TRUNC | O_RDWR);
     close(fd);
 }
+void show_record(){
+    int fd;
+    char show[BUFSIZE*10];
+    if((fd=open("record.txt", O_RDONLY))<0){
+        perror("오류발생");
+        exit(-1);
+    }
+    read(fd, show, BUFSIZE*10);
+    puts(show);
+    close(fd);
+
+}
 struct time_struct time_check() {
     struct time_struct time_val;
     time_val.t = time(NULL);
@@ -281,7 +297,7 @@ void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* ST
     *count += result_miss_count;
 }
 
-void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int total_miss, int total_time){
+void show_stat(FILE *save, char *file_name, char *username, int total_line, int typing_line, int total_miss, int total_time){
     save = fopen("record.txt", "r+t");
     char fline[BUFSIZE];
 
@@ -291,19 +307,18 @@ void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int
     double accuracy = (1 - ((double) total_miss / total_line))*100;
 
     printf("==================================================== RESULT ====================================================\n\n");
-    printf("|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율", "선택한 파일");
-    printf("|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy, file_name);
+    printf("|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s|  %-20s\n", "걸린 시간", "평균 타수(min)", "타이핑 속도", "정확도", "오타율", "선택한 파일", "계정 ID");
+    printf("|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s|  %-15s\n", total_time, typing_speed, typer_per_min, accuracy, 100-accuracy, file_name, username);
     printf("\n==================================================== RECORD ====================================================\n\n");
-
+    
     while(fgets(fline, BUFSIZE, save) != NULL){
         printf("%s\n", fline);
     }
 
-    fprintf(save, "|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s\n",
-        total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name);
+    fprintf(save, "|  %-16d|  %-16.3f|  %-15.3f|  %-17.3f|  %-17.3f|  %-15s|  %-15s\n",
+        total_time, typing_speed, typer_per_min, accuracy, 100 - accuracy, file_name, username);
     fclose(save);
 }
-
 // void exit_process(){
 //     printf("[atexit]: fclose() start..\n");
 //     fclose(file);
@@ -312,7 +327,3 @@ void show_stat(FILE *save, char *file_name, int total_line, int typing_line, int
 //     exit(1);
 // }
 
-
-// 로그인: ID 매칭 실패 - PW 매칭 실패 - 로그인 성공
-// 계정 생성: ID 중복 - 계정 생성 성공
-// 계정 생성 실패 후 로그인 선택 후 1 반복.
