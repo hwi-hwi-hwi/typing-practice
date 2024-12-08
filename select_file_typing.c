@@ -113,7 +113,7 @@ int main() {
     }
 
     end_time = time_check();
-    printf("[ID:%s], [PW:%s], [user_name:%s]", ID, PASSWORD, user_name);
+    // printf("[ID:%s], [PW:%s], [user_name:%s]", ID, PASSWORD, user_name);
     show_stat(save, file_name, ID, total_correct_characters, total_typing_characters, incorrect_characters, (end_time.t - start_time.t));
     fclose(file);
  
@@ -179,8 +179,8 @@ void login(char **user_name, int flag, char *ID, char *PASSWORD){
             copy_buf(temp_pw_cmp, buf, (seperator-buf)+1, strlen(buf)-1);
             printf("파일에서 가져온 [ID:%s], [PASSWORD:%s]\n", temp_id_cmp, temp_pw_cmp);
             
-            printf("ID에도 \\n이 포함되어있을까? %d==%d\n", strlen(ID), strlen(temp_id_cmp));
-            printf("PW에도 \\n이 포함되어있을까? %d==%d\n", strlen(PASSWORD), strlen(temp_pw_cmp));
+            // printf("ID에도 \\n이 포함되어있을까? %d==%d\n", strlen(ID), strlen(temp_id_cmp));
+            // printf("PW에도 \\n이 포함되어있을까? %d==%d\n", strlen(PASSWORD), strlen(temp_pw_cmp));
             if(comp_two(ID, temp_id_cmp)){
                 no_id = 0;
                 
@@ -276,12 +276,15 @@ FILE* choose_file(char **file_name){
     return tmp_file;
 }
 void remove_record(){
+    system("clear");
     int fd = open("record.txt", O_TRUNC | O_RDWR);
     close(fd);
 }
 void show_record(){
+    system("clear");
     int fd;
     char show[BUFSIZE*10];
+
     if((fd=open("record.txt", O_RDONLY))<0){
         perror("오류발생");
         exit(-1);
@@ -326,6 +329,7 @@ void comp_string(int FGETS_LEN, int STDIN_LEN, wchar_t* FGETS_ARRAY, wchar_t* ST
 }
 
 void show_stat(FILE *save, char *file_name, char *username, int total_line, int typing_line, int total_miss, int total_time){
+    system("clear");
     save = fopen("record.txt", "r+t");
     char fline[BUFSIZE];
 
@@ -362,15 +366,15 @@ void copy_buf(char *dest, char *source, int start_index, int end_index){
     for(i=0; i<(end_index-start_index); i++){
         dest[i] = source[start_index+i];
         if(dest[i]=='\n'){
-            printf("실제로 buf안 \\n도 받음.\n");
+            // printf("실제로 buf안 \\n도 받음.\n");
         }
     }
-    printf("copy_buf: [dest:%s]\n", dest);
+    // printf("copy_buf: [dest:%s]\n", dest);
 }
 void free_buf(char *dest, int start_index, int end_index){
     int i;
     for(i=0; i<(end_index-start_index); i++){
         dest[i]=0;
     }
-    printf("free_buf: [dest:%s]\n", dest);
+    // printf("free_buf: [dest:%s]\n", dest);
 }
